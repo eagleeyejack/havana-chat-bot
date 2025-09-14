@@ -1,7 +1,7 @@
 "use client";
 
 import { UserSwitcher } from "./components/user-switcher";
-import { MessageUI } from "../../components/messages/message-ui";
+import { MessageUI } from "@/components/messages/message-ui";
 
 const StudentPage = () => {
 	return (

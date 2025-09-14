@@ -7,7 +7,7 @@ import { Plus, Bot } from "lucide-react";
 import { useUserStore } from "@/app/shared/stores/user-store";
 import { useUserChats, useCreateChat, useChat } from "@/lib/db/hooks/useChats";
 import { useChatMessages, useCreateMessage } from "@/lib/db/hooks/useMessages";
-import { useActiveChat } from "@/lib/hooks/useActiveChat";
+import { useActiveChat } from "@/app/shared/hooks/useActiveChat";
 import MessagesChatBubble from "./messages-bubble";
 import MessageInput from "./message-input";
 import MessagesChatHeader from "./messages-chat-header";

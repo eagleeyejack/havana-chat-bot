@@ -65,6 +65,8 @@ Cypress.Commands.add("waitForBookingComplete", () => {
 	cy.get('[data-testid="status-dropdown-trigger"]', { timeout: 10000 })
 		.should("be.visible")
 		.should("contain", "Call Booked");
+
+	cy.wait(3000);
 });
 
 export {};

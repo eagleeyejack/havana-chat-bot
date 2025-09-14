@@ -10,10 +10,3 @@ Cypress.on("window:before:load", (win) => {
 	cy.stub(win.console, "log").as("consoleLog");
 	cy.stub(win.console, "error").as("consoleError");
 });
-
-// Set up database before each test suite
-beforeEach(() => {
-	// Reset and seed database for consistent test state
-	cy.resetDatabase();
-	cy.seedTestData();
-});

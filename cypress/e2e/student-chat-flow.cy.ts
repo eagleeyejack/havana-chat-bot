@@ -76,18 +76,12 @@ describe("Student Chat Flow E2E Tests", () => {
 
 	describe("Scenario 2: Escalation to human and booking prompt", () => {
 		it("should escalate when requesting human help and show booking offer", () => {
-			// Send message that typically triggers escalation
+			// Send message that should immediately trigger escalation
 			const escalationMessage =
 				"I need to speak to someone about my specific situation. Can I talk to a human advisor?";
 			cy.sendMessage(escalationMessage);
 
-			// Wait for AI response
-			cy.waitForAIResponse();
-
-			// Send follow-up that should trigger escalation
-			cy.sendMessage(
-				"This is urgent, I need personal help with my application"
-			);
+			// Wait for AI response and escalation
 			cy.waitForAIResponse();
 
 			// Check if chat gets escalated (booking offer should appear)
@@ -111,22 +105,11 @@ describe("Student Chat Flow E2E Tests", () => {
 		});
 
 		it("should handle different escalation triggers", () => {
-			const escalationTriggers = [
-				"I want to speak to a human",
-				"Can I talk to an advisor?",
-				"I need personal help",
-				"This is complex, I need human assistance",
-			];
-
-			// Test one escalation trigger
-			cy.sendMessage(escalationTriggers[0]);
+			// Test that a single clear request for human help triggers escalation
+			cy.sendMessage("I want to speak to a human advisor about my situation");
 			cy.waitForAIResponse();
 
-			// Should eventually show booking offer (may need multiple messages)
-			cy.sendMessage("I really need personal guidance on my application");
-			cy.waitForAIResponse();
-
-			// Check for escalation
+			// Check for immediate escalation
 			cy.get('[data-testid="booking-offer"]', { timeout: 15000 }).should(
 				"be.visible"
 			);
@@ -135,16 +118,14 @@ describe("Student Chat Flow E2E Tests", () => {
 
 	describe("Scenario 3: Complete booking flow", () => {
 		beforeEach(() => {
-			// Trigger escalation first
+			// Trigger escalation with a single clear request for human help
 			cy.sendMessage("I need to speak to a human advisor about my application");
-			cy.waitForAIResponse();
-			cy.sendMessage("This is urgent and complex, I need personal help");
+
+			// Wait for AI response to complete fully
 			cy.waitForAIResponse();
 
-			// Wait for booking offer to appear
-			cy.get('[data-testid="booking-offer"]', { timeout: 15000 }).should(
-				"be.visible"
-			);
+			// Wait for the complete escalation process (status update + booking offer)
+			cy.checkChatEscalated();
 		});
 
 		it("should complete the full booking process", () => {
@@ -271,15 +252,12 @@ describe("Student Chat Flow E2E Tests", () => {
 		});
 
 		it("should handle booking form validation", () => {
-			// Trigger booking offer
-			cy.sendMessage("I need human help");
-			cy.waitForAIResponse();
-			cy.sendMessage("Please escalate this");
+			// Trigger escalation with clear request for human help
+			cy.sendMessage("I need to speak to a human advisor for help");
 			cy.waitForAIResponse();
 
-			cy.get('[data-testid="booking-offer"]', { timeout: 15000 }).should(
-				"be.visible"
-			);
+			// Wait for complete escalation process before proceeding
+			cy.checkChatEscalated();
 			cy.get('[data-testid="book-call-button"]').click();
 			cy.get('[data-testid="book-call-yes"]').click();
 
