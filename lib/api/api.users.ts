@@ -1,23 +1,49 @@
-import { db } from "../db/init";
-import { User, users } from "../db/schema";
-import { desc } from "drizzle-orm";
+import { User } from "@/lib/db/schema";
+
+// Type for the API response
+export interface UsersApiResponse {
+	users: User[];
+	count: number;
+}
+
+// Type for API errors
+export interface ApiError {
+	error: string;
+}
+
+// Type guard to check if response is an error
+export function isApiError(data: unknown): data is ApiError {
+	return (
+		data !== null &&
+		typeof data === "object" &&
+		"error" in data &&
+		typeof (data as ApiError).error === "string"
+	);
+}
+
+// Export User as ApiUser for consistency with the function signature
+export type ApiUser = User;
 
 /**
- * Get users from the database
- * @param count - Number of users to retrieve (default: 10)
- * @returns Promise<User[]>
+ * Fetch all users
+ * @returns Promise<ApiUser[]> - Array of all users
+ * @throws Error if the request fails
  */
-export async function getUsers(count: number = 10): Promise<User[]> {
-	try {
-		const result = await db
-			.select()
-			.from(users)
-			.orderBy(desc(users.createdAt))
-			.limit(count);
+export async function fetchUsers(limit: number): Promise<ApiUser[]> {
+	const response = await fetch(`/api/users?limit=${limit}`);
 
-		return result;
-	} catch (error) {
-		console.error("Error fetching users:", error);
-		throw new Error("Failed to fetch users");
+	if (!response.ok) {
+		throw new Error(
+			`Failed to fetch users: ${response.status} ${response.statusText}`
+		);
 	}
+
+	const data = await response.json();
+
+	if (isApiError(data)) {
+		throw new Error(`API Error: ${data.error}`);
+	}
+
+	// Return just the users array from the response
+	return data.users;
 }

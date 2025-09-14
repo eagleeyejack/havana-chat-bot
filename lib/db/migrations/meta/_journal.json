@@ -8,6 +8,13 @@
       "when": 1757842052021,
       "tag": "0000_handy_brood",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "6",
+      "when": 1757844075375,
+      "tag": "0001_yielding_spiral",
+      "breakpoints": true
     }
   ]
 }

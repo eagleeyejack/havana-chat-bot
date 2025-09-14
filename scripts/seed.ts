@@ -3,7 +3,7 @@
 import { seedUsers } from "../lib/db/users";
 import { runMigrations } from "../lib/db/migrate";
 import { User } from "@/lib/db/schema";
-import { getUsers } from "@/lib/api/api.users";
+import { getUsers } from "@/lib/db/actions/actions.users";
 
 async function main() {
 	console.log("🌱 Starting database setup...");
