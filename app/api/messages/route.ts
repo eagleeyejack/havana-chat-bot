@@ -4,7 +4,7 @@ import {
 	getMessages,
 	getMessagesByChat,
 } from "@/lib/db/actions/actions.messages";
-import { updateChat } from "@/lib/db/actions/actions.chats";
+import { updateChat, getChatById } from "@/lib/db/actions/actions.chats";
 import { v4 as uuidv4 } from "uuid";
 import { Message } from "@/lib/db/schema";
 
@@ -98,6 +98,17 @@ export async function POST(request: NextRequest) {
 			lastMessageAt: new Date(),
 		});
 
+		// Trigger AI response for student messages (asynchronously, don't block response)
+		if (role === "student") {
+			// Don't await this - let it run in background
+			triggerAIResponse(chatId, content).catch((error) => {
+				console.error(
+					`Failed to trigger AI response for chat ${chatId}:`,
+					error
+				);
+			});
+		}
+
 		const duration = Date.now() - startTime;
 		console.log(`✅ [POST /api/messages] Success:`, {
 			messageId: newMessage.id,
@@ -114,5 +125,124 @@ export async function POST(request: NextRequest) {
 			{ error: "Failed to create message" },
 			{ status: 500 }
 		);
+	}
+}
+
+/**
+ * Asynchronously trigger AI response for student messages
+ * This runs in the background and doesn't block the message creation response
+ */
+async function triggerAIResponse(
+	chatId: string,
+	userMessage: string
+): Promise<void> {
+	try {
+		console.log(
+			`🤖 [AI Trigger] Starting AI response for chat ${chatId.substring(
+				0,
+				8
+			)}...`
+		);
+
+		// Get chat details to check if AI should respond
+		const chat = await getChatById(chatId);
+		if (!chat) {
+			console.log(`🤖 [AI Trigger] Chat not found: ${chatId}`);
+			return;
+		}
+
+		// Don't trigger AI if admin has taken over
+		if (chat.adminTakenOver) {
+			console.log(
+				`🤖 [AI Trigger] Skipping - admin has taken over chat ${chatId.substring(
+					0,
+					8
+				)}...`
+			);
+			return;
+		}
+
+		// Get recent conversation history for AI context
+		const messages = await getMessagesByChat(chatId, 20); // Get last 20 messages for context
+		const conversationHistory = messages.map((msg) => ({
+			role: msg.role,
+			content: msg.content,
+		}));
+
+		// Check if this is the first student message for title generation
+		const studentMessages = conversationHistory.filter(
+			(msg) => msg.role === "student"
+		);
+		const isFirstStudentMessage = studentMessages.length === 1;
+
+		console.log(
+			`🤖 [AI Trigger] Generating AI response for chat ${chatId.substring(
+				0,
+				8
+			)}... (${
+				conversationHistory.length
+			} messages in history, first student message: ${isFirstStudentMessage})`
+		);
+
+		// Generate chat title if this is the first student message
+		if (isFirstStudentMessage) {
+			try {
+				console.log(
+					`📝 [Title Generation] Generating title for chat ${chatId.substring(
+						0,
+						8
+					)}... based on: "${userMessage.substring(0, 50)}${
+						userMessage.length > 50 ? "..." : ""
+					}"`
+				);
+
+				const { generateChatTitle } = await import("@/lib/utils/ai-response");
+				const newTitle = await generateChatTitle(userMessage);
+
+				// Update the chat with the new AI-generated title
+				await updateChat(chatId, {
+					title: newTitle,
+				});
+
+				console.log(
+					`✅ [Title Generation] Title generated and updated for chat ${chatId.substring(
+						0,
+						8
+					)}...: "${newTitle}"`
+				);
+			} catch (titleError) {
+				console.error(
+					`❌ [Title Generation] Failed to generate title for chat ${chatId}:`,
+					titleError
+				);
+				// Continue with AI response even if title generation fails
+			}
+		}
+
+		// Use the AI utility directly instead of making HTTP calls
+		const { generateAIResponse } = await import("@/lib/utils/ai-response");
+
+		const result = await generateAIResponse({
+			chatId,
+			userMessage,
+			conversationHistory,
+		});
+
+		console.log(
+			`✅ [AI Trigger] AI response generated successfully for chat ${chatId.substring(
+				0,
+				8
+			)}... (${
+				result.analysis.escalationSuggested
+					? "escalation suggested"
+					: "normal response"
+			})`
+		);
+	} catch (error) {
+		console.error(
+			`❌ [AI Trigger] Failed to generate AI response for chat ${chatId}:`,
+			error
+		);
+		// Don't throw - we want this to fail silently to avoid breaking the main message flow
 	}
 }

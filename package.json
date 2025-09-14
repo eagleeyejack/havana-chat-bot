@@ -14,7 +14,11 @@
 		"db:reset": "tsx scripts/reset-db.ts",
 		"test": "vitest",
 		"test:ui": "vitest --ui",
-		"test:run": "vitest run"
+		"test:run": "vitest run",
+		"cypress:open": "cypress open",
+		"cypress:run": "cypress run",
+		"e2e": "cypress run",
+		"e2e:open": "cypress open"
 	},
 	"dependencies": {
 		"@radix-ui/react-avatar": "^1.1.10",
@@ -48,10 +52,12 @@
 		"@eslint/eslintrc": "^3",
 		"@tailwindcss/postcss": "^4",
 		"@types/better-sqlite3": "^7.6.13",
+		"@types/cypress": "^1.1.6",
 		"@types/node": "^20",
 		"@types/react": "^19",
 		"@types/react-dom": "^19",
 		"@vitest/ui": "^3.2.4",
+		"cypress": "^15.2.0",
 		"drizzle-kit": "^0.31.4",
 		"eslint": "^9",
 		"eslint-config-next": "15.5.3",

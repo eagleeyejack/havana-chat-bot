@@ -20,6 +20,7 @@ const MessageInput = ({
 	return (
 		<div className="flex gap-2">
 			<Input
+				data-testid="message-input"
 				value={newMessage}
 				onChange={(e) => setNewMessage(e.target.value)}
 				onKeyPress={handleKeyPress}
@@ -28,6 +29,7 @@ const MessageInput = ({
 				className="flex-1"
 			/>
 			<Button
+				data-testid="send-button"
 				onClick={sendMessage}
 				disabled={!newMessage.trim() || isSending}
 				size="sm"

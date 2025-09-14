@@ -7,6 +7,7 @@ import {
 	type FetchMessagesOptions,
 	type CreateMessageData,
 } from "@/lib/api/api.messages";
+import { usePollingIntervals } from "@/app/shared/stores/settings-store";
 
 /**
  * Hook to fetch messages with React Query
@@ -14,11 +15,12 @@ import {
  * @returns React Query result with messages data
  */
 export function useMessages(options: FetchMessagesOptions = {}) {
+	const { messagesPollingInterval } = usePollingIntervals();
+
 	return useQuery({
 		queryKey: ["messages", options],
 		queryFn: () => fetchMessages(options),
-		// Refetch every 1 second when focused (for real-time updates)
-		refetchInterval: 1000,
+		refetchInterval: messagesPollingInterval,
 		// Keep previous data while refetching
 		placeholderData: (previousData) => previousData,
 	});
@@ -35,12 +37,13 @@ export function useChatMessages(
 	count = 50,
 	enabled = true
 ) {
+	const { messagesPollingInterval } = usePollingIntervals();
+
 	return useQuery({
 		queryKey: ["messages", { chatId, count }],
 		queryFn: () => fetchMessagesByChat(chatId!, count),
 		enabled: !!chatId && enabled,
-		// Refetch every 1 second when focused (for real-time updates)
-		refetchInterval: 1000,
+		refetchInterval: messagesPollingInterval,
 		// Keep previous data while refetching
 		placeholderData: (previousData) => previousData,
 		// Transform data to sort messages by creation time (oldest first)

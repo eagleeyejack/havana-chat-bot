@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Plus, Bot } from "lucide-react";
 import { useUserStore } from "@/app/shared/stores/user-store";
-import { useUserChats, useCreateChat } from "@/lib/db/hooks/useChats";
+import { useUserChats, useCreateChat, useChat } from "@/lib/db/hooks/useChats";
 import { useChatMessages, useCreateMessage } from "@/lib/db/hooks/useMessages";
 import { useActiveChat } from "@/lib/hooks/useActiveChat";
 import MessagesChatBubble from "./messages-bubble";
@@ -20,8 +20,10 @@ interface MessageUIProps {
 
 export const MessageUI: React.FC<MessageUIProps> = ({ className = "" }) => {
 	const { currentUser } = useUserStore();
+
 	const [newMessage, setNewMessage] = useState("");
 	const [bookingOffered, setBookingOffered] = useState(false);
+
 	const messagesEndRef = useRef<HTMLDivElement>(null);
 
 	const {
@@ -30,7 +32,9 @@ export const MessageUI: React.FC<MessageUIProps> = ({ className = "" }) => {
 		error: chatsError,
 	} = useUserChats(currentUser?.id);
 
-	const { activeChat, setActiveChat } = useActiveChat(currentUser?.id, chats);
+	const { activeChat, setActiveChat } = useActiveChat(currentUser?.id);
+
+	const { data: currentChat } = useChat(activeChat?.id, true);
 
 	const {
 		data: messages = [],
@@ -48,6 +52,13 @@ export const MessageUI: React.FC<MessageUIProps> = ({ className = "" }) => {
 	React.useEffect(() => {
 		scrollToBottom();
 	}, [messages]);
+
+	// Reset booking offered state when chat status changes to escalated or when switching chats
+	React.useEffect(() => {
+		if (currentChat?.status === "escalated" || activeChat?.id) {
+			setBookingOffered(false);
+		}
+	}, [currentChat?.status, activeChat?.id]);
 
 	const createNewChat = async () => {
 		if (!currentUser) return;
@@ -105,6 +116,7 @@ export const MessageUI: React.FC<MessageUIProps> = ({ className = "" }) => {
 			<div className="w-80 bg-white border-r border-gray-200 flex flex-col">
 				<div className="p-4 border-b border-gray-200">
 					<Button
+						data-testid="new-chat-button"
 						onClick={createNewChat}
 						disabled={createChatMutation.isPending || !currentUser}
 						className="w-full"
@@ -130,12 +142,13 @@ export const MessageUI: React.FC<MessageUIProps> = ({ className = "" }) => {
 								No chats yet. Create your first chat!
 							</div>
 						) : (
-							chats.map((chat) => (
+							chats.map((chat, index) => (
 								<MessagesChatHeader
 									key={chat.id}
 									chat={chat}
 									setActiveChat={setActiveChat}
 									activeChat={activeChat!}
+									index={index}
 								/>
 							))
 						)}
@@ -153,27 +166,37 @@ export const MessageUI: React.FC<MessageUIProps> = ({ className = "" }) => {
 								{activeChat.title || "Untitled Chat"}
 							</h2>
 							<p className="text-sm text-gray-500">
-								{activeChat.adminTakenOver && " • Admin Intervention Active"}
+								{(currentChat || activeChat)?.adminTakenOver &&
+									" • Admin Intervention Active"}
 							</p>
 							<StudentStatusOverview
 								chatId={activeChat.id}
-								chatStatus={activeChat.status}
+								chatStatus={(currentChat || activeChat)?.status}
 							/>
 						</div>
 
 						{/* Messages */}
 						<ScrollArea className="flex-1 p-4">
-							<div className="space-y-4">
+							<div data-testid="messages-container" className="space-y-4">
 								{isLoadingMessages ? (
-									<div className="text-center py-8 text-gray-500">
+									<div
+										data-testid="loading-messages"
+										className="text-center py-8 text-gray-500"
+									>
 										Loading messages...
 									</div>
 								) : messagesError ? (
-									<div className="text-center py-8 text-red-500">
+									<div
+										data-testid="messages-error"
+										className="text-center py-8 text-red-500"
+									>
 										Error loading messages. Please try again.
 									</div>
 								) : messages.length === 0 ? (
-									<div className="text-center py-8 text-gray-500">
+									<div
+										data-testid="no-messages"
+										className="text-center py-8 text-gray-500"
+									>
 										No messages yet. Start the conversation!
 									</div>
 								) : (
@@ -195,9 +218,9 @@ export const MessageUI: React.FC<MessageUIProps> = ({ className = "" }) => {
 						{/* Message Input */}
 						<div className="p-4 border-t border-gray-200 bg-white">
 							{/* Show booking offer if chat is escalated and not already offered */}
-							{activeChat?.status === "escalated" && !bookingOffered && (
+							{currentChat?.status === "escalated" && !bookingOffered && (
 								<BookingOfferStudent
-									chatId={activeChat.id}
+									chatId={currentChat.id}
 									onBookingComplete={(booking) => {
 										console.log("Booking completed:", booking);
 										setBookingOffered(true);

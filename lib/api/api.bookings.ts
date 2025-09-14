@@ -32,10 +32,10 @@ export interface AvailableSlotsResponse {
 }
 
 /**
- * Get available booking slots for a specific date
- * @param chatId - Chat ID
+ * Get globally available booking slots for a specific date
+ * @param chatId - Chat ID (maintains API consistency, enables future chat-specific features)
  * @param date - Date in YYYY-MM-DD format
- * @returns Promise<AvailableSlotsResponse> - Available slots
+ * @returns Promise<AvailableSlotsResponse> - Global available slots (same for all students)
  * @throws Error if the request fails
  */
 export async function getAvailableSlots(
@@ -43,7 +43,7 @@ export async function getAvailableSlots(
 	date: string
 ): Promise<AvailableSlotsResponse> {
 	const response = await fetch(
-		`/api/chats/${chatId}/booking/available?date=${date}`
+		`/api/chats/booking/available?chatId=${chatId}&date=${date}`
 	);
 
 	if (!response.ok) {
@@ -72,7 +72,7 @@ export async function createBooking(
 ): Promise<BookingResponse> {
 	const { chatId, ...bookingData } = request;
 
-	const response = await fetch(`/api/chats/${chatId}/booking`, {
+	const response = await fetch(`/api/chats/booking?chatId=${chatId}`, {
 		method: "POST",
 		headers: {
 			"Content-Type": "application/json",
@@ -104,7 +104,7 @@ export async function createBooking(
 export async function getBookingByChat(
 	chatId: string
 ): Promise<BookingResponse> {
-	const response = await fetch(`/api/chats/${chatId}/booking`);
+	const response = await fetch(`/api/chats/booking?chatId=${chatId}`);
 
 	if (!response.ok) {
 		throw new Error(

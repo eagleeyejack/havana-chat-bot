@@ -69,6 +69,17 @@ export function analyzeConversation(
 		"broken",
 		"cannot",
 		"can't",
+		"speak to a human",
+		"talk to a human",
+		"speak to a person",
+		"talk to a person",
+		"human support",
+		"real person",
+		"actual person",
+		"human help",
+		"escalate",
+		"supervisor",
+		"manager",
 	];
 
 	const bookingKeywords = [
@@ -150,6 +161,35 @@ Respond in JSON format only:
  *
  * AI Pass V1 - simple search based on keywords and title
  */
+/**
+ * Generate prompt for AI-powered chat title generation
+ * Creates concise, descriptive titles based on the first student message
+ */
+export function generateChatTitlePrompt(userMessage: string): string {
+	return `You are tasked with creating a concise, descriptive title for a student support chat based on their first message.
+
+GUIDELINES:
+- Keep titles short (2-6 words maximum)
+- Focus on the main topic or issue
+- Make it clear and professional
+- Don't include question marks or punctuation
+- Use title case (capitalize main words)
+- Be specific but not overly detailed
+
+EXAMPLES:
+- "Course Application Help" 
+- "Tuition Fee Inquiry"
+- "Admission Requirements"
+- "Technical Support"
+- "Schedule Information"
+- "Accommodation Request"
+
+FIRST MESSAGE FROM STUDENT:
+"${userMessage}"
+
+Respond with ONLY the title, no explanation or additional text.`;
+}
+
 export function searchKnowledgeBase(
 	query: string,
 	maxResults: number = 3

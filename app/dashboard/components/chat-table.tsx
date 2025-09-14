@@ -1,6 +1,7 @@
 "use client";
 
 import { useRouter } from "next/navigation";
+import { useState, useMemo, useEffect } from "react";
 import {
 	Table,
 	TableBody,
@@ -10,20 +11,65 @@ import {
 	TableRow,
 } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
-import { Eye, MessageSquare } from "lucide-react";
-import { useAdminChats } from "@/lib/hooks/use-admin-chats";
+import { Eye, MessageSquare, ChevronLeft, ChevronRight } from "lucide-react";
+import { useAdminChats } from "@/lib/db/hooks/useAdminChats";
 import ErrorCard from "@/components/custom-ui/error-card";
 import { formatDate } from "@/lib/utils/formatDate";
 import { truncateMessage } from "@/lib/utils/truncate";
 import { getStatusBadge } from "@/lib/utils/getStatusBadge";
+import { usePollingIntervals } from "@/app/shared/stores/settings-store";
+
+const ITEMS_PER_PAGE = 15;
 
 export function ChatTable() {
+	const { chatListPollingInterval } = usePollingIntervals();
 	const router = useRouter();
-	const { data, isLoading: loading, error } = useAdminChats();
+	const [currentPage, setCurrentPage] = useState(1);
+
+	const {
+		data,
+		isLoading: loading,
+		error,
+	} = useAdminChats({
+		refetchInterval: chatListPollingInterval,
+		status: undefined, // Fetch all chats regardless of status
+		count: 100, // Increase count to see more chats
+	});
 
 	const handleChatSelect = (chatId: string) => {
 		router.push(`/dashboard/chats/${chatId}`);
 	};
+
+	// Pagination calculations
+	const paginatedData = useMemo(() => {
+		if (!data?.chats) return { chats: [], totalPages: 0, totalItems: 0 };
+
+		const totalItems = data.chats.length;
+		const totalPages = Math.ceil(totalItems / ITEMS_PER_PAGE);
+		const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
+		const endIndex = startIndex + ITEMS_PER_PAGE;
+		const chats = data.chats.slice(startIndex, endIndex);
+
+		return { chats, totalPages, totalItems };
+	}, [data?.chats, currentPage]);
+
+	const handlePreviousPage = () => {
+		setCurrentPage((prev) => Math.max(1, prev - 1));
+	};
+
+	const handleNextPage = () => {
+		setCurrentPage((prev) => Math.min(paginatedData.totalPages, prev + 1));
+	};
+
+	// Reset to page 1 when data changes or if current page exceeds total pages
+	useEffect(() => {
+		if (
+			paginatedData.totalPages > 0 &&
+			currentPage > paginatedData.totalPages
+		) {
+			setCurrentPage(1);
+		}
+	}, [paginatedData.totalPages, currentPage]);
 
 	// Handle error state
 	if (error) {
@@ -109,7 +155,7 @@ export function ChatTable() {
 						</TableRow>
 					</TableHeader>
 					<TableBody>
-						{data.chats.map((chat) => (
+						{paginatedData.chats.map((chat) => (
 							<TableRow
 								key={chat.id}
 								className="hover:bg-gray-50 cursor-pointer"
@@ -164,6 +210,55 @@ export function ChatTable() {
 					</TableBody>
 				</Table>
 			</div>
+
+			{/* Pagination Controls */}
+			{paginatedData.totalPages > 1 && (
+				<div className="flex items-center justify-between px-2 pb-4">
+					<div className="flex items-center gap-2">
+						<p className="text-sm text-gray-700">
+							Showing{" "}
+							<span className="font-medium">
+								{Math.min(
+									(currentPage - 1) * ITEMS_PER_PAGE + 1,
+									paginatedData.totalItems
+								)}
+							</span>{" "}
+							to{" "}
+							<span className="font-medium">
+								{Math.min(
+									currentPage * ITEMS_PER_PAGE,
+									paginatedData.totalItems
+								)}
+							</span>{" "}
+							of <span className="font-medium">{paginatedData.totalItems}</span>{" "}
+							chats
+						</p>
+					</div>
+					<div className="flex items-center gap-2">
+						<Button
+							variant="outline"
+							size="sm"
+							onClick={handlePreviousPage}
+							disabled={currentPage === 1}
+						>
+							<ChevronLeft className="h-4 w-4 mr-1" />
+							Previous
+						</Button>
+						<span className="text-sm text-gray-700">
+							Page {currentPage} of {paginatedData.totalPages}
+						</span>
+						<Button
+							variant="outline"
+							size="sm"
+							onClick={handleNextPage}
+							disabled={currentPage === paginatedData.totalPages}
+						>
+							Next
+							<ChevronRight className="h-4 w-4 ml-1" />
+						</Button>
+					</div>
+				</div>
+			)}
 		</div>
 	);
 }

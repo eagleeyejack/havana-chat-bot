@@ -95,7 +95,7 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({
 					</Badge>
 				</div>
 				<div className="flex flex-wrap gap-2">
-					{intervalOptions.map(({ value, label, color }) => (
+					{intervalOptions.map(({ value, label }) => (
 						<Button
 							key={value}
 							size="sm"
@@ -122,7 +122,7 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({
 					</Badge>
 				</div>
 				<div className="flex flex-wrap gap-2">
-					{intervalOptions.map(({ value, label, color }) => (
+					{intervalOptions.map(({ value, label }) => (
 						<Button
 							key={value}
 							size="sm"

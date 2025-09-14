@@ -11,12 +11,12 @@ import {
 	CardTitle,
 } from "@/components/ui/card";
 import { CalendarIcon, ClockIcon, UserIcon, MailIcon } from "lucide-react";
-
-interface BookingSlot {
-	timeISO: string;
-	displayTime: string;
-	displayDate: string;
-}
+import { type BookingSlot } from "@/lib/api/api.bookings";
+import { getAvailableWeekdays } from "@/lib/utils/dateGeneration";
+import {
+	useCreateBooking,
+	useAvailableSlots,
+} from "@/lib/db/hooks/useBookings";
 
 interface BookingInterfaceProps {
 	chatId: string;
@@ -43,57 +43,21 @@ export default function BookingInterface({
 	});
 	const [selectedDate, setSelectedDate] = useState<string>("");
 	const [selectedSlot, setSelectedSlot] = useState<BookingSlot | null>(null);
-	const [availableSlots, setAvailableSlots] = useState<BookingSlot[]>([]);
-	const [loading, setLoading] = useState(false);
 	const [error, setError] = useState<string | null>(null);
 
-	// Generate next 5 weekdays for date selection
-	const getAvailableDates = () => {
-		const dates = [];
-		const today = new Date();
-		const current = new Date(today);
+	const createBookingMutation = useCreateBooking();
+	const availableDates = getAvailableWeekdays(5);
 
-		// Find next weekday if today is weekend
-		while (current.getDay() === 0 || current.getDay() === 6) {
-			current.setDate(current.getDate() + 1);
-		}
-
-		for (let i = 0; i < 5; i++) {
-			if (current.getDay() !== 0 && current.getDay() !== 6) {
-				// Skip weekends
-				dates.push(new Date(current));
-			} else {
-				i--; // Don't count weekend days
-			}
-			current.setDate(current.getDate() + 1);
-		}
-
-		return dates;
-	};
-
-	const availableDates = getAvailableDates();
-
-	const fetchAvailableSlots = async (date: string) => {
-		setLoading(true);
-		try {
-			const response = await fetch(
-				`/api/chats/${chatId}/booking/available?date=${date}`
-			);
-			if (!response.ok) throw new Error("Failed to fetch slots");
-
-			const data = await response.json();
-			setAvailableSlots(data.availableSlots);
-		} catch (err) {
-			setError("Failed to load available times. Please try again. " + err);
-		} finally {
-			setLoading(false);
-		}
-	};
+	const {
+		data: slotsData,
+		isLoading: slotsLoading,
+		error: slotsError,
+	} = useAvailableSlots(chatId, selectedDate, !!selectedDate);
 
 	const handleDateSelect = (date: string) => {
 		setSelectedDate(date);
 		setSelectedSlot(null);
-		fetchAvailableSlots(date);
+		setError(null);
 		setStep("slots");
 	};
 
@@ -102,37 +66,39 @@ export default function BookingInterface({
 		setStep("confirm");
 	};
 
-	const handleConfirmBooking = async () => {
+	const handleConfirmBooking = () => {
 		if (!selectedSlot || !formData.name || !formData.email) return;
 
 		setStep("loading");
-		try {
-			const response = await fetch(`/api/chats/${chatId}/booking`, {
-				method: "POST",
-				headers: { "Content-Type": "application/json" },
-				body: JSON.stringify({
-					name: formData.name.trim(),
-					email: formData.email.trim(),
-					timeISO: selectedSlot.timeISO,
-				}),
-			});
+		setError(null);
 
-			const result = await response.json();
-
-			if (!response.ok) {
-				throw new Error(result.error || "Failed to create booking");
+		createBookingMutation.mutate(
+			{
+				chatId,
+				name: formData.name.trim(),
+				email: formData.email.trim(),
+				timeISO: selectedSlot.timeISO,
+			},
+			{
+				onSuccess: (result) => {
+					onBookingComplete(result.booking);
+				},
+				onError: (err) => {
+					setError(
+						err instanceof Error ? err.message : "Failed to create booking"
+					);
+					setStep("confirm");
+				},
 			}
-
-			onBookingComplete(result.booking);
-		} catch (err) {
-			setError(err instanceof Error ? err.message : "Failed to create booking");
-			setStep("confirm");
-		}
+		);
 	};
 
 	if (step === "intro") {
 		return (
-			<Card className="w-full mx-auto border-blue-200">
+			<Card
+				data-testid="booking-intro"
+				className="w-full mx-auto border-blue-200"
+			>
 				<CardHeader className="text-center">
 					<div className="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-2">
 						<CalendarIcon className="w-6 h-6 text-blue-600" />
@@ -157,10 +123,19 @@ export default function BookingInterface({
 						</p>
 					</div>
 					<div className="flex gap-2">
-						<Button onClick={() => setStep("form")} className="flex-1">
+						<Button
+							data-testid="book-call-yes"
+							onClick={() => setStep("form")}
+							className="flex-1"
+						>
 							Yes, book a call
 						</Button>
-						<Button variant="outline" onClick={onCancel} className="flex-1">
+						<Button
+							data-testid="book-call-cancel"
+							variant="outline"
+							onClick={onCancel}
+							className="flex-1"
+						>
 							Not now
 						</Button>
 					</div>
@@ -171,7 +146,7 @@ export default function BookingInterface({
 
 	if (step === "form") {
 		return (
-			<Card className="w-full  mx-auto">
+			<Card data-testid="booking-form" className="w-full  mx-auto">
 				<CardHeader>
 					<CardTitle className="flex items-center gap-2">
 						<UserIcon className="w-5 h-5" />
@@ -188,6 +163,7 @@ export default function BookingInterface({
 						</label>
 						<Input
 							id="name"
+							data-testid="booking-name-input"
 							value={formData.name}
 							onChange={(e) =>
 								setFormData({ ...formData, name: e.target.value })
@@ -201,6 +177,7 @@ export default function BookingInterface({
 						</label>
 						<Input
 							id="email"
+							data-testid="booking-email-input"
 							type="email"
 							value={formData.email}
 							onChange={(e) =>
@@ -211,13 +188,18 @@ export default function BookingInterface({
 					</div>
 					<div className="flex gap-2 pt-2">
 						<Button
+							data-testid="proceed-to-date-selection"
 							onClick={() => setStep("slots")}
 							disabled={!formData.name.trim() || !formData.email.trim()}
 							className="flex-1"
 						>
 							Choose Date & Time
 						</Button>
-						<Button variant="outline" onClick={() => setStep("intro")}>
+						<Button
+							data-testid="back-to-intro"
+							variant="outline"
+							onClick={() => setStep("intro")}
+						>
 							Back
 						</Button>
 					</div>
@@ -230,7 +212,7 @@ export default function BookingInterface({
 		if (!selectedDate) {
 			// Date selection
 			return (
-				<Card className="w-full  mx-auto">
+				<Card data-testid="date-selection" className="w-full  mx-auto">
 					<CardHeader>
 						<CardTitle className="flex items-center gap-2">
 							<CalendarIcon className="w-5 h-5" />
@@ -242,6 +224,7 @@ export default function BookingInterface({
 						{availableDates.map((date, index) => (
 							<Button
 								key={index}
+								data-testid={`date-option-${index}`}
 								variant="outline"
 								onClick={() =>
 									handleDateSelect(date.toISOString().split("T")[0])
@@ -271,7 +254,7 @@ export default function BookingInterface({
 
 		// Time slot selection
 		return (
-			<Card className="w-full  mx-auto">
+			<Card data-testid="time-selection" className="w-full  mx-auto">
 				<CardHeader>
 					<CardTitle className="flex items-center gap-2">
 						<ClockIcon className="w-5 h-5" />
@@ -286,36 +269,51 @@ export default function BookingInterface({
 					</CardDescription>
 				</CardHeader>
 				<CardContent className="space-y-3">
-					{loading && (
+					{slotsLoading && (
 						<div className="text-center py-4">Loading available times...</div>
 					)}
 
-					{!loading && availableSlots.length === 0 && (
-						<div className="text-center py-4 text-gray-600">
-							No available slots for this date. Please choose another day.
+					{slotsError && (
+						<div className="text-center py-4 text-red-600">
+							Failed to load available times. Please try another date.
 						</div>
 					)}
 
-					{!loading && availableSlots.length > 0 && (
-						<div className="grid grid-cols-2 gap-2 max-h-60 overflow-y-auto">
-							{availableSlots.map((slot, index) => (
-								<Button
-									key={index}
-									variant="outline"
-									onClick={() => handleSlotSelect(slot)}
-									className="justify-center"
-								>
-									{slot.displayTime}
-								</Button>
-							))}
-						</div>
-					)}
+					{!slotsLoading &&
+						!slotsError &&
+						slotsData?.availableSlots.length === 0 && (
+							<div className="text-center py-4 text-gray-600">
+								No available slots for this date. Please choose another day.
+							</div>
+						)}
+
+					{!slotsLoading &&
+						!slotsError &&
+						slotsData &&
+						slotsData.availableSlots.length > 0 && (
+							<div
+								data-testid="available-time-slots"
+								className="grid grid-cols-2 gap-2 max-h-60 overflow-y-auto"
+							>
+								{slotsData.availableSlots.map((slot, index) => (
+									<Button
+										key={index}
+										data-testid={`time-slot-${index}`}
+										variant="outline"
+										onClick={() => handleSlotSelect(slot)}
+										className="justify-center"
+									>
+										{slot.displayTime}
+									</Button>
+								))}
+							</div>
+						)}
 
 					<Button
 						variant="outline"
 						onClick={() => {
 							setSelectedDate("");
-							setAvailableSlots([]);
+							setSelectedSlot(null);
 						}}
 						className="w-full"
 					>
@@ -328,7 +326,7 @@ export default function BookingInterface({
 
 	if (step === "confirm") {
 		return (
-			<Card className="w-full  mx-auto">
+			<Card data-testid="booking-confirmation" className="w-full  mx-auto">
 				<CardHeader>
 					<CardTitle>Confirm Your Booking</CardTitle>
 					<CardDescription>Please review your call details</CardDescription>
@@ -362,10 +360,18 @@ export default function BookingInterface({
 					</div>
 
 					<div className="flex gap-2">
-						<Button onClick={handleConfirmBooking} className="flex-1">
+						<Button
+							data-testid="confirm-booking-final"
+							onClick={handleConfirmBooking}
+							className="flex-1"
+						>
 							Confirm Booking
 						</Button>
-						<Button variant="outline" onClick={() => setStep("slots")}>
+						<Button
+							data-testid="back-to-time-selection"
+							variant="outline"
+							onClick={() => setStep("slots")}
+						>
 							Back
 						</Button>
 					</div>

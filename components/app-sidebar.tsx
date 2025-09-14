@@ -7,7 +7,6 @@ import {
 	Phone,
 	Settings,
 	SquareTerminal,
-	User,
 } from "lucide-react";
 
 import { NavMain } from "@/components/nav-main";
@@ -57,18 +56,6 @@ const data = {
 				{
 					title: "Chats",
 					url: "/dashboard/chats",
-				},
-			],
-		},
-		{
-			title: "Students",
-			url: "/dashboard/students",
-			icon: User,
-			isActive: true,
-			items: [
-				{
-					title: "Students",
-					url: "/dashboard/students",
 				},
 			],
 		},

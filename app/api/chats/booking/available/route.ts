@@ -2,15 +2,33 @@ import { NextRequest, NextResponse } from "next/server";
 import { getBookings } from "@/lib/db/actions/actions.bookings";
 
 /**
- * GET /api/chats/[chatId]/booking/available - Get available booking slots for a specific date
+ * GET /api/chats/[chatId]/booking/available - Get globally available booking slots for a specific date
+ *
+ * Design decisions:
+ * - chatId via query params to match existing API pattern (see /api/messages)
+ * - Currently returns global slots, but chatId enables future features like:
+ *   - Chat-specific advisor assignment
+ *   - Priority booking for escalated chats
+ *   - Different availability windows based on chat status
+ *   - Per-chat rate limiting and audit trails
  */
-export async function GET(
-	request: NextRequest,
-	{ params }: { params: { chatId: string } }
-) {
+export async function GET(request: NextRequest) {
 	try {
 		const { searchParams } = new URL(request.url);
+		const chatId = searchParams.get("chatId");
 		const date = searchParams.get("date");
+
+		// TODO: Future enhancement - could use chatId for:
+		// - Chat status-based availability (e.g., escalated chats get priority slots)
+		// - Advisor assignment based on chat topic/history
+		// - Rate limiting per chat to prevent spam requests
+
+		if (!chatId) {
+			return NextResponse.json(
+				{ error: "Chat ID parameter is required" },
+				{ status: 400 }
+			);
+		}
 
 		if (!date) {
 			return NextResponse.json(

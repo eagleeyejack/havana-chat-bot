@@ -33,7 +33,7 @@ export function UserSwitcher() {
 			<span className="text-sm font-medium text-gray-700">Current User:</span>
 
 			<DropdownMenu>
-				<DropdownMenuTrigger asChild>
+				<DropdownMenuTrigger data-testid="user-switcher-trigger" asChild>
 					<Button variant="outline" className="flex items-center space-x-2">
 						{currentUser ? (
 							<>
@@ -46,10 +46,17 @@ export function UserSwitcher() {
 					</Button>
 				</DropdownMenuTrigger>
 
-				<DropdownMenuContent align="start" className="w-56">
+				<DropdownMenuContent
+					data-testid="user-switcher-content"
+					align="start"
+					className="w-56"
+				>
 					{users.map((user) => (
 						<DropdownMenuItem
 							key={user.id}
+							data-testid={`user-option-${user.name
+								.toLowerCase()
+								.replace(/\s+/g, "-")}`}
 							onClick={() =>
 								setCurrentUser({
 									...user,

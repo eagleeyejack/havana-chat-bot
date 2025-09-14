@@ -16,7 +16,8 @@ const CallsPage = () => {
 					Scheduled Calls Dashboard
 				</h1>
 				<p className="text-gray-600">
-					View and manage all scheduled student consultation calls
+					View and manage all scheduled student consultation calls. Each time
+					slot can only be booked by one student.
 				</p>
 			</div>
 

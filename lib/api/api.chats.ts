@@ -65,6 +65,31 @@ export async function fetchChats(
 }
 
 /**
+ * Fetch a single chat by ID
+ * @param chatId - The ID of the chat to fetch
+ * @returns Promise<ApiChat> - The requested chat
+ * @throws Error if the request fails
+ */
+export async function fetchChat(chatId: string): Promise<ApiChat> {
+	const params = new URLSearchParams({ chatId });
+	const response = await fetch(`/api/chats/${chatId}?${params.toString()}`);
+
+	if (!response.ok) {
+		throw new Error(
+			`Failed to fetch chat: ${response.status} ${response.statusText}`
+		);
+	}
+
+	const data = await response.json();
+
+	if (isApiError(data)) {
+		throw new Error(`API Error: ${data.error}`);
+	}
+
+	return data;
+}
+
+/**
  * Create a new chat
  * @param chatData - Data for creating the chat
  * @returns Promise<ApiChat> - The created chat

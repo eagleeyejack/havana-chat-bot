@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useRef, useEffect, useCallback } from "react";
+import React, { useState, useRef, useEffect } from "react";
 import { useParams } from "next/navigation";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { fetchMessages } from "@/lib/api/api.messages";
@@ -14,7 +14,6 @@ import Link from "next/link";
 import { formatDistanceToNow } from "date-fns";
 import { KBUsageSummary } from "@/components/messages/message-knowledge-base";
 import { createMessage } from "@/lib/api/api.messages";
-import { generateAIResponse } from "@/lib/api/api.ai";
 import MessagesChatBubble from "@/components/messages/messages-bubble";
 import MessageInput from "@/components/messages/message-input";
 import { usePollingIntervals } from "@/app/shared/stores/settings-store";
@@ -32,12 +31,12 @@ const AdminChatPage = () => {
 	const [newMessage, setNewMessage] = useState("");
 	const [aiEnabled, setAiEnabled] = useState(true);
 	const messagesEndRef = useRef<HTMLDivElement>(null);
-	const lastProcessedMessageRef = useRef<string | null>(null);
 
 	// Fetch all chats to find the current one
 	const { data: chats = [], isLoading: isLoadingChat } = useQuery({
 		queryKey: ["chats"],
 		queryFn: () => fetchChats({}),
+		refetchInterval: messagesPollingInterval, // Refetch chats at same interval as messages to catch status changes
 	});
 
 	const currentChat = chats.find((c) => c.id === chatId);
@@ -55,6 +54,8 @@ const AdminChatPage = () => {
 		mutationFn: createMessage,
 		onSuccess: () => {
 			queryClient.invalidateQueries({ queryKey: ["messages", chatId] });
+			// Also invalidate chats to refresh status and other chat properties
+			queryClient.invalidateQueries({ queryKey: ["chats"] });
 			setNewMessage("");
 		},
 	});
@@ -89,36 +90,6 @@ const AdminChatPage = () => {
 		chatId,
 		updateChatMutation,
 	]);
-
-	// AI Response function using OpenAI with knowledge base integration
-	const handleAIResponse = useCallback(
-		async (userMessage: string) => {
-			if (!aiEnabled || currentChat?.adminTakenOver) return;
-
-			try {
-				// Prepare conversation history for AI context
-				const conversationHistory = messages.map((msg) => ({
-					role: msg.role,
-					content: msg.content,
-				}));
-
-				// Generate AI response using OpenAI with knowledge base integration
-				await generateAIResponse({
-					chatId,
-					userMessage,
-					conversationHistory,
-				});
-
-				// The AI API creates the message directly in the database,
-				// so we just need to invalidate the query to refresh the UI
-				queryClient.invalidateQueries({ queryKey: ["messages", chatId] });
-			} catch (error) {
-				console.error("Error generating AI response:", error);
-				// Optionally show error message to admin
-			}
-		},
-		[aiEnabled, currentChat?.adminTakenOver, messages, chatId, queryClient]
-	);
 
 	const sendMessage = async () => {
 		if (!newMessage.trim() || createMessageMutation.isPending) return;
@@ -155,22 +126,6 @@ const AdminChatPage = () => {
 			adminTakenOver: !newAiState,
 		});
 	};
-
-	// Handle new student messages - trigger AI response (only once per message)
-	useEffect(() => {
-		if (messages.length > 0) {
-			const lastMessage = messages[messages.length - 1];
-			if (
-				lastMessage.role === "student" &&
-				aiEnabled &&
-				!currentChat?.adminTakenOver &&
-				lastProcessedMessageRef.current !== lastMessage.id
-			) {
-				lastProcessedMessageRef.current = lastMessage.id;
-				handleAIResponse(lastMessage.content);
-			}
-		}
-	}, [messages, aiEnabled, currentChat?.adminTakenOver, handleAIResponse]);
 
 	if (isLoadingChat || isLoadingMessages) {
 		return (

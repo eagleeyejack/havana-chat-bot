@@ -1,0 +1,65 @@
+{
+	"testUsers": [
+		{
+			"name": "Carol Brown",
+			"email": "carol@example.com"
+		},
+		{
+			"name": "Alice Johnson",
+			"email": "alice@example.com"
+		},
+		{
+			"name": "Bob Smith",
+			"email": "bob@example.com"
+		}
+	],
+	"testMessages": {
+		"universityPrices": [
+			"What are the tuition fees for undergraduate programs?",
+			"How much does it cost to study at Havana College?",
+			"What is the price for a master's degree program?",
+			"Are there any additional costs besides tuition?"
+		],
+		"escalationTriggers": [
+			"I need to speak to a human advisor",
+			"Can I talk to someone in person about my application?",
+			"This is urgent, I need personal help",
+			"I want to speak to a real person, not a chatbot",
+			"Can you connect me with an admissions advisor?"
+		],
+		"scholarshipQuestions": [
+			"Are there any scholarships available?",
+			"What financial aid options do you offer?",
+			"How can I apply for funding support?",
+			"Do you have need-based scholarships?"
+		]
+	},
+	"expectedResponses": {
+		"priceKeywords": [
+			"tuition",
+			"fee",
+			"cost",
+			"price",
+			"£",
+			"$",
+			"funding",
+			"scholarship"
+		],
+		"escalationKeywords": [
+			"advisor",
+			"consultant",
+			"appointment",
+			"call",
+			"speak",
+			"human"
+		],
+		"bookingKeywords": [
+			"schedule",
+			"book",
+			"appointment",
+			"call",
+			"meeting",
+			"advisor"
+		]
+	}
+}

@@ -69,6 +69,9 @@ const MessagesChatBubble = ({
 			className={`flex ${isRightAligned ? "justify-end" : "justify-start"}`}
 		>
 			<div
+				data-testid={`message-bubble`}
+				data-role={message.role}
+				data-message-id={message.id}
 				className={`max-w-xs lg:max-w-md px-4 py-2 rounded-lg ${getMessageBgColor(
 					message.role,
 					adminView

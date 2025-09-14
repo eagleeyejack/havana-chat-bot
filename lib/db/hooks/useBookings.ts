@@ -3,6 +3,7 @@ import {
 	fetchBookings,
 	createBooking,
 	getBookingByChat,
+	getAvailableSlots,
 	type CreateBookingRequest,
 } from "@/lib/api/api.bookings";
 
@@ -42,6 +43,26 @@ export function useChatBooking(chatId: string | undefined, enabled = true) {
 }
 
 /**
+ * Hook to fetch available booking slots for a date
+ * @param chatId - Chat ID
+ * @param date - Date in YYYY-MM-DD format
+ * @param enabled - Whether to enable the query (default: true)
+ */
+export function useAvailableSlots(
+	chatId: string | undefined,
+	date: string | undefined,
+	enabled = true
+) {
+	return useQuery({
+		queryKey: ["availableSlots", { chatId, date }],
+		queryFn: () => getAvailableSlots(chatId!, date!),
+		enabled: !!chatId && !!date && enabled,
+		// Keep data fresh for booking conflicts
+		staleTime: 1000 * 60 * 2, // 2 minutes
+	});
+}
+
+/**
  * Hook to create a new booking
  * @returns Mutation for creating bookings
  */
@@ -59,6 +80,9 @@ export function useCreateBooking() {
 			queryClient.invalidateQueries({
 				queryKey: ["booking", { chatId: newBooking.booking.id }],
 			});
+
+			// Invalidate available slots to reflect new booking
+			queryClient.invalidateQueries({ queryKey: ["availableSlots"] });
 
 			// Also invalidate chats to update status
 			queryClient.invalidateQueries({ queryKey: ["chats"] });

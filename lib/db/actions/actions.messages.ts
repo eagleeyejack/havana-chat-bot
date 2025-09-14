@@ -1,6 +1,6 @@
 import { db } from "../init";
 import { Message, messages } from "../schema";
-import { desc, asc, eq, and } from "drizzle-orm";
+import { asc, eq, and } from "drizzle-orm";
 
 /**
  * Create a new message

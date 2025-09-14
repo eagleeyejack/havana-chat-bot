@@ -1,6 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import {
 	fetchChats,
+	fetchChat,
 	createChat,
 	updateChat,
 	type ApiChat,
@@ -39,6 +40,24 @@ export function useUserChats(userId: string | undefined, enabled = true) {
 		queryKey: ["chats", { userId }],
 		queryFn: () => fetchChats({ userId: userId! }),
 		enabled: !!userId && enabled,
+		refetchInterval: chatListPollingInterval,
+		// Keep previous data while refetching
+		placeholderData: (previousData) => previousData,
+	});
+}
+
+/**
+ * Hook to fetch a single chat by ID
+ * @param chatId - Chat ID to fetch
+ * @param enabled - Whether to enable the query (default: true)
+ */
+export function useChat(chatId: string | undefined, enabled = true) {
+	const { chatListPollingInterval } = usePollingIntervals();
+
+	return useQuery({
+		queryKey: ["chats", chatId],
+		queryFn: () => fetchChat(chatId!),
+		enabled: !!chatId && enabled,
 		refetchInterval: chatListPollingInterval,
 		// Keep previous data while refetching
 		placeholderData: (previousData) => previousData,

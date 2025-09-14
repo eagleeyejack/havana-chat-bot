@@ -21,8 +21,8 @@ interface SettingsState {
 }
 
 const DEFAULT_SETTINGS = {
-	chatListPollingInterval: 30000, // 30 seconds
-	messagesPollingInterval: 30000, // 30 seconds
+	chatListPollingInterval: 5000, // 5 seconds - faster for real-time status updates
+	messagesPollingInterval: 5000, // 5 seconds - faster for real-time messages
 	autoScrollToBottom: true,
 	aiAutoResponse: true,
 };

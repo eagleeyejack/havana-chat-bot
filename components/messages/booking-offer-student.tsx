@@ -49,7 +49,7 @@ export default function BookingOfferStudent({
 
 	if (showBookingInterface) {
 		return (
-			<div className="my-4">
+			<div data-testid="booking-interface-container" className="my-4">
 				<BookingInterface
 					chatId={chatId}
 					onBookingComplete={handleBookingComplete}
@@ -60,7 +60,10 @@ export default function BookingOfferStudent({
 	}
 
 	return (
-		<div className="mb-4 bg-blue-50 border border-blue-200 rounded-lg p-4 relative">
+		<div
+			data-testid="booking-offer"
+			className="mb-4 bg-blue-50 border border-blue-200 rounded-lg p-4 relative"
+		>
 			<button
 				onClick={handleDismiss}
 				className="absolute top-2 right-2 text-blue-400 hover:text-blue-600"
@@ -93,6 +96,7 @@ export default function BookingOfferStudent({
 					</div>
 					<div className="flex gap-2">
 						<Button
+							data-testid="book-call-button"
 							size="sm"
 							onClick={() => setShowBookingInterface(true)}
 							className="bg-blue-600 hover:bg-blue-700 text-white"
@@ -101,6 +105,7 @@ export default function BookingOfferStudent({
 							Book a Call
 						</Button>
 						<Button
+							data-testid="booking-dismiss-button"
 							size="sm"
 							variant="outline"
 							onClick={handleDismiss}

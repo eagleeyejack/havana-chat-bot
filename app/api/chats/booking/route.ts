@@ -10,12 +10,10 @@ import { v4 as uuidv4 } from "uuid";
 /**
  * GET /api/chats/[chatId]/booking - Get booking for a specific chat
  */
-export async function GET(
-	request: NextRequest,
-	{ params }: { params: { chatId: string } }
-) {
+export async function GET(request: NextRequest) {
 	try {
-		const { chatId } = params;
+		const { searchParams } = new URL(request.url);
+		const chatId = searchParams.get("chatId");
 
 		if (!chatId) {
 			return NextResponse.json(
@@ -55,12 +53,10 @@ export async function GET(
 /**
  * POST /api/chats/[chatId]/booking - Create a new booking for a chat
  */
-export async function POST(
-	request: NextRequest,
-	{ params }: { params: { chatId: string } }
-) {
+export async function POST(request: NextRequest) {
 	try {
-		const { chatId } = params;
+		const { searchParams } = new URL(request.url);
+		const chatId = searchParams.get("chatId");
 		const body = await request.json();
 		const { name, email, timeISO } = body;
 
@@ -112,7 +108,9 @@ export async function POST(
 
 		const timeSlotTaken = existingBookingsAtTime.some((booking) => {
 			const bookingTime = new Date(booking.timeISO);
-			const timeDiff = Math.abs(bookingTime.getTime() - scheduledTime.getTime());
+			const timeDiff = Math.abs(
+				bookingTime.getTime() - scheduledTime.getTime()
+			);
 			return timeDiff < 15 * 60 * 1000; // 15 minutes in milliseconds
 		});
 
