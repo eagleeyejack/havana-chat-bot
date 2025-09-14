@@ -8,6 +8,7 @@ import {
 	type CreateChatData,
 	type UpdateChatData,
 } from "@/lib/api/api.chats";
+import { usePollingIntervals } from "@/app/shared/stores/settings-store";
 
 /**
  * Hook to fetch chats with React Query
@@ -15,11 +16,12 @@ import {
  * @returns React Query result with chats data
  */
 export function useChats(options: FetchChatsOptions = {}) {
+	const { chatListPollingInterval } = usePollingIntervals();
+
 	return useQuery({
 		queryKey: ["chats", options],
 		queryFn: () => fetchChats(options),
-		// Refetch every 2 seconds when focused (for real-time updates)
-		refetchInterval: 2000,
+		refetchInterval: chatListPollingInterval,
 		// Keep previous data while refetching
 		placeholderData: (previousData) => previousData,
 	});
@@ -31,12 +33,13 @@ export function useChats(options: FetchChatsOptions = {}) {
  * @param enabled - Whether to enable the query (default: true)
  */
 export function useUserChats(userId: string | undefined, enabled = true) {
+	const { chatListPollingInterval } = usePollingIntervals();
+
 	return useQuery({
 		queryKey: ["chats", { userId }],
 		queryFn: () => fetchChats({ userId: userId! }),
 		enabled: !!userId && enabled,
-		// Refetch every 2 seconds when focused (for real-time updates)
-		refetchInterval: 2000,
+		refetchInterval: chatListPollingInterval,
 		// Keep previous data while refetching
 		placeholderData: (previousData) => previousData,
 	});

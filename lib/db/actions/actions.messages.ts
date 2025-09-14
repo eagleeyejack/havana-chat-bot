@@ -1,6 +1,6 @@
 import { db } from "../init";
 import { Message, messages } from "../schema";
-import { desc, eq, and } from "drizzle-orm";
+import { desc, asc, eq, and } from "drizzle-orm";
 
 /**
  * Create a new message
@@ -74,10 +74,10 @@ export async function getMessages(
 		const baseQuery = db.select().from(messages);
 		const result =
 			conditions.length === 0
-				? await baseQuery.orderBy(desc(messages.createdAt)).limit(count)
+				? await baseQuery.orderBy(asc(messages.createdAt)).limit(count)
 				: await baseQuery
 						.where(conditions.length === 1 ? conditions[0] : and(...conditions))
-						.orderBy(desc(messages.createdAt))
+						.orderBy(asc(messages.createdAt))
 						.limit(count);
 
 		return result;
@@ -102,7 +102,7 @@ export async function getMessagesByChat(
 			.select()
 			.from(messages)
 			.where(eq(messages.chatId, chatId))
-			.orderBy(desc(messages.createdAt))
+			.orderBy(asc(messages.createdAt))
 			.limit(count);
 
 		return result;

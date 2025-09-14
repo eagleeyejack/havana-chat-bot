@@ -1,5 +1,6 @@
 "use client";
 
+import Container from "@/components/custom-ui/container";
 import { User } from "@/lib/db/schema";
 import { useEffect, useState } from "react";
 
@@ -21,14 +22,14 @@ const StudentsPage = () => {
 	}, []);
 
 	return (
-		<div>
+		<Container>
 			<h1>Students</h1>
 			<ul>
 				{students.map((student) => (
 					<li key={student.id}>{student.name}</li>
 				))}
 			</ul>
-		</div>
+		</Container>
 	);
 };
 

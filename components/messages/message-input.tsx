@@ -8,12 +8,14 @@ const MessageInput = ({
 	handleKeyPress,
 	isSending,
 	sendMessage,
+	placeholder = "Type your message...",
 }: {
 	newMessage: string;
 	setNewMessage: (value: string) => void;
 	handleKeyPress: (e: React.KeyboardEvent) => void;
 	isSending: boolean;
 	sendMessage: () => void;
+	placeholder?: string;
 }) => {
 	return (
 		<div className="flex gap-2">
@@ -21,7 +23,7 @@ const MessageInput = ({
 				value={newMessage}
 				onChange={(e) => setNewMessage(e.target.value)}
 				onKeyPress={handleKeyPress}
-				placeholder="Type your message..."
+				placeholder={placeholder}
 				disabled={isSending}
 				className="flex-1"
 			/>

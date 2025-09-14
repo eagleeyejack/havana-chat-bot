@@ -1,5 +1,11 @@
+import Container from "@/components/custom-ui/container";
+
 const CallsPage = () => {
-	return <div>CallsPage</div>;
+	return (
+		<Container>
+			<h1>CallsPage</h1>
+		</Container>
+	);
 };
 
 export default CallsPage;

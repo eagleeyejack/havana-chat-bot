@@ -1,0 +1,177 @@
+export type KBEntry = {
+	id: string;
+	title: string;
+	keywords: string[];
+	text: string;
+};
+
+export const KB: KBEntry[] = [
+	{
+		id: "overview",
+		title: "About Havana College",
+		keywords: [
+			"about",
+			"overview",
+			"havana",
+			"university",
+			"college",
+			"institution",
+		],
+		text: "Havana College is a modern institution offering undergraduate and postgraduate study in Computer Science, Business, and Humanities. Located in London, we provide world-class education with a focus on practical skills and academic excellence. Our campus features state-of-the-art facilities and a vibrant student community.",
+	},
+	{
+		id: "fees-ug",
+		title: "Undergraduate fees 2025",
+		keywords: [
+			"fee",
+			"tuition",
+			"cost",
+			"undergraduate",
+			"ug",
+			"price",
+			"money",
+		],
+		text: "Home students: £9,250 per year. International students: £21,000 per year. Fees are set annually and may change for future academic years. Payment plans are available to spread costs across the academic year.",
+	},
+	{
+		id: "fees-pg",
+		title: "Postgraduate fees 2025",
+		keywords: [
+			"fee",
+			"tuition",
+			"cost",
+			"postgraduate",
+			"pg",
+			"masters",
+			"price",
+			"money",
+		],
+		text: "Home students: £11,500 per year. International students: £24,000 per year. PhD programs: £4,786 for home students, £18,500 for international students. Research council funding may be available for eligible students.",
+	},
+	{
+		id: "deadlines",
+		title: "Application deadlines",
+		keywords: [
+			"deadline",
+			"ucas",
+			"apply",
+			"intake",
+			"application",
+			"when",
+			"due",
+		],
+		text: "UCAS equal consideration deadline: 31 January 2026. Late applications are considered if places remain available. Postgraduate applications are accepted year-round but early application is recommended. International students should apply early to allow time for visa processing.",
+	},
+	{
+		id: "requirements-ug",
+		title: "Undergraduate entry requirements",
+		keywords: [
+			"requirement",
+			"entry",
+			"qualification",
+			"a-level",
+			"gcse",
+			"undergraduate",
+			"grades",
+		],
+		text: "Typical offers: AAB-ABB at A-Level or equivalent. GCSE English and Mathematics at grade C/4 or above. International Baccalaureate: 34-36 points. We also accept BTEC, Access courses, and international qualifications. Specific courses may have additional requirements.",
+	},
+	{
+		id: "requirements-pg",
+		title: "Postgraduate entry requirements",
+		keywords: [
+			"requirement",
+			"entry",
+			"qualification",
+			"degree",
+			"postgraduate",
+			"masters",
+		],
+		text: "First or upper second-class honors degree (2:1) or equivalent in a relevant subject. Some courses accept 2:2 with relevant experience. International students need IELTS 6.5 overall (6.0 in each component) or equivalent English qualification.",
+	},
+	{
+		id: "courses-cs",
+		title: "Computer Science courses",
+		keywords: [
+			"computer",
+			"science",
+			"cs",
+			"programming",
+			"software",
+			"technology",
+			"coding",
+		],
+		text: "We offer BSc Computer Science (3 years), MSc Computer Science (1 year), and PhD programs. Specializations include Artificial Intelligence, Cybersecurity, Software Engineering, and Data Science. Industry placement years available for undergraduate students.",
+	},
+	{
+		id: "courses-business",
+		title: "Business courses",
+		keywords: [
+			"business",
+			"management",
+			"finance",
+			"marketing",
+			"economics",
+			"mba",
+		],
+		text: "Available courses: BSc Business Management, BA Economics and Finance, MSc International Business, MBA. Our business school is AACSB accredited. Strong industry connections provide excellent internship and graduate employment opportunities.",
+	},
+	{
+		id: "courses-humanities",
+		title: "Humanities courses",
+		keywords: [
+			"humanities",
+			"english",
+			"history",
+			"philosophy",
+			"literature",
+			"arts",
+		],
+		text: "We offer BA English Literature, BA History, BA Philosophy, MA Creative Writing, and PhD programs. Small class sizes ensure personalized attention. Regular seminars with visiting scholars and writers enhance the academic experience.",
+	},
+	{
+		id: "scholarships",
+		title: "Scholarships and financial support",
+		keywords: [
+			"scholarship",
+			"bursary",
+			"financial",
+			"aid",
+			"support",
+			"funding",
+			"grant",
+		],
+		text: "Merit scholarships up to £5,000 per year available for high-achieving students. Means-tested bursaries up to £3,000 for students from low-income families. International excellence scholarships worth £2,000 per year. Research studentships available for PhD candidates.",
+	},
+	{
+		id: "accommodation",
+		title: "Student accommodation",
+		keywords: [
+			"accommodation",
+			"housing",
+			"halls",
+			"residence",
+			"campus",
+			"living",
+		],
+		text: "Guaranteed accommodation for first-year students. Modern halls of residence on campus and nearby. Costs range from £120-180 per week including utilities and internet. Self-catered and catered options available. Private housing support provided for later years.",
+	},
+	{
+		id: "campus-facilities",
+		title: "Campus and facilities",
+		keywords: ["campus", "facilities", "library", "gym", "sports", "labs"],
+		text: "Modern campus with 24/7 library, computer labs, science laboratories, and sports center. Student union building with cafes, shops, and social spaces. Green campus with study areas and recreational facilities. Located in central London with excellent transport links.",
+	},
+	{
+		id: "student-life",
+		title: "Student life and societies",
+		keywords: ["student", "life", "societies", "clubs", "activities", "social"],
+		text: "Over 100 student societies including academic, cultural, and recreational groups. Active Students' Union organizing events and representing student interests. Sports teams competing in inter-university leagues. Volunteering opportunities and career development programs.",
+	},
+	{
+		id: "contact",
+		title: "Contact information",
+		keywords: ["contact", "phone", "email", "address", "admissions"],
+		text: "Admissions Office: admissions@havana.ac.uk, +44 20 7946 0958. Student Services: studentservices@havana.ac.uk. Campus address: Havana College, 123 University Street, London WC1E 6BT. Office hours: Monday-Friday 9:00-17:00. Emergency out-of-hours contact available.",
+	},
+];

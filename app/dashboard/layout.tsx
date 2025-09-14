@@ -7,6 +7,8 @@ import {
 	SidebarTrigger,
 } from "@/components/ui/sidebar";
 
+export const LAYOUT_HEIGHT = "h-[calc(100vh-64px)]";
+
 const DashboardLayout = ({ children }: { children: React.ReactNode }) => {
 	return (
 		<SidebarProvider>
@@ -22,7 +24,9 @@ const DashboardLayout = ({ children }: { children: React.ReactNode }) => {
 						<AutoBreadcrumb />
 					</div>
 				</header>
-				<div className="flex flex-1 flex-col gap-4 p-4 pt-0">{children}</div>
+				<div className={`flex flex-col gap-6 pt-0 ${LAYOUT_HEIGHT}`}>
+					{children}
+				</div>
 			</SidebarInset>
 		</SidebarProvider>
 	);

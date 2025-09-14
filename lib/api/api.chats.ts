@@ -1,5 +1,5 @@
 import { Chat } from "@/lib/db/schema";
-import { isApiError } from "./utils";
+import { isApiError } from "./api.utils";
 
 //
 export interface ChatsApiResponse {

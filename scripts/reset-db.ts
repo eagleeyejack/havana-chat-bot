@@ -29,3 +29,4 @@ try {
 	console.error("❌ Database reset failed:", error);
 	process.exit(1);
 }
+
