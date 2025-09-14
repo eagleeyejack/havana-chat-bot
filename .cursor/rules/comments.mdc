@@ -1,0 +1,7 @@
+---
+description: Do not leave comments like this "// [comment]"
+globs: *.ts, *.tsx
+alwaysApply: true
+---
+
+Do not leave comments like this "// [comment]" in our files, if you are going to leave comments for components or functionality use JSDocs so the IDE can show them to developers.

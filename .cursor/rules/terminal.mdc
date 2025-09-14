@@ -1,0 +1,7 @@
+---
+description: Never run the dev command
+globs: *.ts, *.tsx
+alwaysApply: true
+---
+
+Never run the terminal for dev, it's always running

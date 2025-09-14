@@ -1,0 +1,7 @@
+---
+description: Never use any as a type
+globs: *.ts, *.tsx
+alwaysApply: true
+---
+
+Never use any as a type, you must always search for the correct type, or create it in a shareable and reuseable way if you're going to create it

@@ -1,11 +1,9 @@
 "use client";
 
-import { useUserStore } from "../shared/stores/user-store";
 import { UserSwitcher } from "./components/user-switcher";
+import { MessageUI } from "../../components/messages/message-ui";
 
 const StudentPage = () => {
-	const { currentUser } = useUserStore();
-
 	return (
 		<div className="min-h-screen bg-gray-50">
 			<UserSwitcher />
@@ -22,7 +20,9 @@ const StudentPage = () => {
 						</p>
 					</div>
 
-					<div>chat!! {currentUser?.name}</div>
+					<div className="bg-white rounded-lg shadow-lg h-[600px] overflow-hidden">
+						<MessageUI />
+					</div>
 				</div>
 			</div>
 		</div>

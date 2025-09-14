@@ -1,0 +1,9 @@
+---
+description: Accessing the API
+globs: *.ts, *.tsx
+alwaysApply: true
+---
+
+When wanting to use fetch to access the database via api routes, never create the functions inside the file, check @lib/api for what you need, and if it's not there create it there.
+
+We also use react query to manage our state in the app, so always use react query when fetching data
