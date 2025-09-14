@@ -99,6 +99,53 @@ export function analyzeConversation(
 }
 
 /**
+ * Generate prompt for AI-powered escalation analysis
+ * This provides more sophisticated analysis than simple keyword matching
+ */
+export function generateEscalationAnalysisPrompt(
+	userMessage: string,
+	conversationHistory: Array<{
+		role: Message["role"];
+		content: string;
+	}>
+): string {
+	const historyContext = conversationHistory
+		.slice(-5) // Last 5 messages for context
+		.map((msg) => `${msg.role}: ${msg.content}`)
+		.join("\n");
+
+	return `You are an AI assistant helping to analyze student support conversations for escalation needs.
+
+Analyze the following conversation context and latest user message to determine if the situation requires escalation to human support.
+
+CONVERSATION HISTORY (last 5 messages):
+${historyContext}
+
+LATEST USER MESSAGE:
+${userMessage}
+
+Consider these factors for escalation:
+1. Student expressions of frustration, anger, or dissatisfaction
+2. Complex issues that may require human expertise
+3. Complaints about services or processes
+4. Requests that seem beyond AI capabilities
+5. Technical problems that haven't been resolved
+6. Urgent or time-sensitive matters
+7. Emotional distress or personal situations
+8. Requests for human contact or speaking to someone
+
+IMPORTANT: Only suggest escalation if there are genuine signs of need for human intervention. Don't escalate for simple questions that can be handled by AI.
+
+Respond in JSON format only:
+{
+  "escalationNeeded": boolean,
+  "confidence": number (0-1),
+  "reasons": ["reason1", "reason2"],
+  "suggestedResponse": "Brief suggestion for next steps"
+}`;
+}
+
+/*
  * Search knowledge base for relevant entries based on user query
  *
  * AI Pass V1 - simple search based on keywords and title

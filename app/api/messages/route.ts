@@ -10,11 +10,19 @@ import { Message } from "@/lib/db/schema";
 
 // GET /api/messages - Get messages
 export async function GET(request: NextRequest) {
+	const startTime = Date.now();
 	try {
 		const { searchParams } = new URL(request.url);
 		const chatId = searchParams.get("chatId");
 		const role = searchParams.get("role") as "student" | "bot" | "admin" | null;
 		const count = searchParams.get("count");
+
+		console.log(`🔍 [GET /api/messages] Request params:`, {
+			chatId: chatId ? `${chatId.substring(0, 8)}...` : null,
+			role,
+			count,
+			timestamp: new Date().toISOString(),
+		});
 
 		let messages;
 		if (chatId) {
@@ -29,9 +37,17 @@ export async function GET(request: NextRequest) {
 			messages = await getMessages(options);
 		}
 
+		const duration = Date.now() - startTime;
+		console.log(`✅ [GET /api/messages] Success:`, {
+			resultCount: messages.length,
+			chatId: chatId ? `${chatId.substring(0, 8)}...` : "all",
+			duration: `${duration}ms`,
+		});
+
 		return NextResponse.json(messages);
 	} catch (error) {
-		console.error("Error in GET /api/messages:", error);
+		const duration = Date.now() - startTime;
+		console.error(`❌ [GET /api/messages] Error after ${duration}ms:`, error);
 		return NextResponse.json(
 			{ error: "Failed to fetch messages" },
 			{ status: 500 }
@@ -41,9 +57,18 @@ export async function GET(request: NextRequest) {
 
 // POST /api/messages - Create a new message
 export async function POST(request: NextRequest) {
+	const startTime = Date.now();
 	try {
 		const body = await request.json();
 		const { chatId, role, content, meta } = body;
+
+		console.log(`🔍 [POST /api/messages] Request:`, {
+			chatId: chatId ? `${chatId.substring(0, 8)}...` : null,
+			role,
+			contentLength: content?.length || 0,
+			hasMeta: !!meta,
+			timestamp: new Date().toISOString(),
+		});
 
 		if (!chatId || !role || !content) {
 			return NextResponse.json(
@@ -73,9 +98,18 @@ export async function POST(request: NextRequest) {
 			lastMessageAt: new Date(),
 		});
 
+		const duration = Date.now() - startTime;
+		console.log(`✅ [POST /api/messages] Success:`, {
+			messageId: newMessage.id,
+			chatId: `${chatId.substring(0, 8)}...`,
+			role,
+			duration: `${duration}ms`,
+		});
+
 		return NextResponse.json(newMessage);
 	} catch (error) {
-		console.error("Error in POST /api/messages:", error);
+		const duration = Date.now() - startTime;
+		console.error(`❌ [POST /api/messages] Error after ${duration}ms:`, error);
 		return NextResponse.json(
 			{ error: "Failed to create message" },
 			{ status: 500 }

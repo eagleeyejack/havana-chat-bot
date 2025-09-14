@@ -1,6 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { fetchUsers } from "@/lib/api/api.users";
-import { fetchMessages } from "@/lib/api/api.messages";
+
 import { useChats } from "@/lib/db/hooks/useChats";
 
 export interface AdminChatData {
@@ -46,30 +46,30 @@ export function useAdminChats() {
 			// Create a map of users by ID for quick lookup
 			const userMap = new Map(users.map((user) => [user.id, user]));
 
-			// Enrich each chat with additional data
+			// Enrich each chat with additional data (without expensive message fetching)
 			const enrichedChats = await Promise.all(
 				chats.map(async (chat): Promise<AdminChatData> => {
 					const user = userMap.get(chat.userId);
 
 					// Get messages for this chat to count and get last message
 					let messageCount = 0;
-					let lastMessage = "No messages yet";
+					const lastMessage = "No messages yet";
 
 					try {
-						const messages = await fetchMessages({
-							chatId: chat.id,
-							count: 1,
-						});
-						messageCount = messages.length;
+						// const messages = await fetchMessages({
+						// 	chatId: chat.id,
+						// 	count: 1,
+						// });
+						messageCount = 1;
 
-						if (messages.length > 0) {
-							const lastMsg = messages[messages.length - 1];
-							lastMessage = lastMsg.content;
-							// Truncate if too long
-							if (lastMessage.length > 60) {
-								lastMessage = lastMessage.substring(0, 60) + "...";
-							}
-						}
+						// if (messages.length > 0) {
+						// 	const lastMsg = messages[messages.length - 1];
+						// 	lastMessage = lastMsg.content;
+						// 	// Truncate if too long
+						// 	if (lastMessage.length > 60) {
+						// 		lastMessage = lastMessage.substring(0, 60) + "...";
+						// 	}
+						// }
 					} catch (error) {
 						console.warn(
 							`Failed to fetch messages for chat ${chat.id}:`,
@@ -106,6 +106,10 @@ export function useAdminChats() {
 			return { chats: enrichedChats };
 		},
 		enabled: chats.length > 0 && users.length > 0, // Only run when we have both chats and users
+		// Don't run enrichment in background to reduce server load
+		refetchIntervalInBackground: false,
+		// Cache for longer since we removed expensive operations
+		staleTime: 30000, // Consider data fresh for 30 seconds
 	});
 
 	return {

@@ -67,7 +67,7 @@ export const usePollingIntervals = () => {
 
 // Predefined interval options
 export const POLLING_INTERVALS = {
-	REALTIME: 3000, // 3 seconds
+	REALTIME: 5000, // 5 seconds - minimum reasonable interval
 	FAST: 15000, // 15 seconds
 	NORMAL: 30000, // 30 seconds
 	SLOW: 60000, // 1 minute

@@ -11,6 +11,8 @@ import { useActiveChat } from "@/lib/hooks/useActiveChat";
 import MessagesChatBubble from "./messages-bubble";
 import MessageInput from "./message-input";
 import MessagesChatHeader from "./messages-chat-header";
+import BookingOfferStudent from "./booking-offer-student";
+import StudentStatusOverview from "@/app/student/components/status-overview";
 
 interface MessageUIProps {
 	className?: string;
@@ -19,6 +21,7 @@ interface MessageUIProps {
 export const MessageUI: React.FC<MessageUIProps> = ({ className = "" }) => {
 	const { currentUser } = useUserStore();
 	const [newMessage, setNewMessage] = useState("");
+	const [bookingOffered, setBookingOffered] = useState(false);
 	const messagesEndRef = useRef<HTMLDivElement>(null);
 
 	const {
@@ -145,14 +148,17 @@ export const MessageUI: React.FC<MessageUIProps> = ({ className = "" }) => {
 				{activeChat ? (
 					<>
 						{/* Chat Header */}
-						<div className="p-4 border-b border-gray-200 bg-white">
+						<div className="p-4 border-b border-gray-200 bg-white flex justify-between items-center">
 							<h2 className="font-semibold">
 								{activeChat.title || "Untitled Chat"}
 							</h2>
 							<p className="text-sm text-gray-500">
-								Status: {activeChat.status}
 								{activeChat.adminTakenOver && " • Admin Intervention Active"}
 							</p>
+							<StudentStatusOverview
+								chatId={activeChat.id}
+								chatStatus={activeChat.status}
+							/>
 						</div>
 
 						{/* Messages */}
@@ -171,18 +177,16 @@ export const MessageUI: React.FC<MessageUIProps> = ({ className = "" }) => {
 										No messages yet. Start the conversation!
 									</div>
 								) : (
-									messages.map((message) => (
-										<MessagesChatBubble
-											key={message.id}
-											message={message}
-											currentUser={{
-												id: currentUser!.id,
-												name: currentUser!.name,
-												email: currentUser!.email,
-												createdAt: new Date(currentUser!.createdAt),
-											}}
-										/>
-									))
+									<>
+										{messages.map((message) => (
+											<MessagesChatBubble
+												key={message.id}
+												message={message}
+												showKnowledgeBase={false}
+												adminView={false}
+											/>
+										))}
+									</>
 								)}
 								<div ref={messagesEndRef} />
 							</div>
@@ -190,6 +194,18 @@ export const MessageUI: React.FC<MessageUIProps> = ({ className = "" }) => {
 
 						{/* Message Input */}
 						<div className="p-4 border-t border-gray-200 bg-white">
+							{/* Show booking offer if chat is escalated and not already offered */}
+							{activeChat?.status === "escalated" && !bookingOffered && (
+								<BookingOfferStudent
+									chatId={activeChat.id}
+									onBookingComplete={(booking) => {
+										console.log("Booking completed:", booking);
+										setBookingOffered(true);
+										// Optionally refresh chat data to show updated status
+									}}
+									onDismiss={() => setBookingOffered(true)}
+								/>
+							)}
 							<MessageInput
 								newMessage={newMessage}
 								setNewMessage={setNewMessage}

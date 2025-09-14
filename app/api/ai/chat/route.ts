@@ -8,7 +8,9 @@ import {
 	analyzeConversation,
 	generateSystemPrompt,
 	searchKnowledgeBase,
+	generateEscalationAnalysisPrompt,
 } from "@/lib/open-ai/prompts";
+import { updateChat } from "@/lib/db/actions";
 
 const openai = new OpenAI({
 	apiKey: process.env.OPENAI_API_KEY,
@@ -24,9 +26,17 @@ interface AIRequest {
 }
 
 export async function POST(request: NextRequest) {
+	const startTime = Date.now();
 	try {
 		const body: AIRequest = await request.json();
 		const { chatId, userMessage, conversationHistory = [] } = body;
+
+		console.log(`🔍 [POST /api/ai/chat] Request:`, {
+			chatId: chatId ? `${chatId.substring(0, 8)}...` : null,
+			messageLength: userMessage?.length || 0,
+			historyLength: conversationHistory.length,
+			timestamp: new Date().toISOString(),
+		});
 
 		if (!chatId || !userMessage) {
 			return NextResponse.json(
@@ -69,23 +79,23 @@ export async function POST(request: NextRequest) {
 			},
 		];
 
-		const completion = await openai.chat.completions.create({
-			model: "gpt-4o-mini",
-			messages,
-			max_tokens: 500,
-			temperature: 0.7,
-		});
+		// Run AI response and escalation analysis in parallel for better performance
+		const [completion, analysis] = await Promise.all([
+			openai.chat.completions.create({
+				model: "gpt-4o-mini",
+				messages,
+				max_tokens: 500,
+				temperature: 0.7,
+			}),
+			// Simple keyword-based analysis (fast)
+			Promise.resolve(analyzeConversation(userMessage, conversationHistory)),
+		]);
 
 		const aiResponse = completion.choices[0]?.message?.content;
 
 		if (!aiResponse) {
 			throw new Error("No response from OpenAI");
 		}
-
-		/*
-			Do we need to escalate this or book a call?
-		*/
-		const analysis = analyzeConversation(userMessage, conversationHistory);
 
 		const meta = JSON.stringify({
 			sources: relevantKB.map((entry) => entry.id),
@@ -95,13 +105,83 @@ export async function POST(request: NextRequest) {
 		});
 
 		const messageId = uuidv4();
-		await createMessage({
-			id: messageId,
-			chatId,
-			role: "bot",
-			content: aiResponse,
-			meta,
-		});
+
+		// Run message creation and escalation analysis in parallel to improve performance
+		const escalationPrompt = generateEscalationAnalysisPrompt(
+			userMessage,
+			conversationHistory
+		);
+
+		const [, escalationCompletion] = await Promise.all([
+			// Create message in DB
+			createMessage({
+				id: messageId,
+				chatId,
+				role: "bot",
+				content: aiResponse,
+				meta,
+			}),
+			// Get AI escalation analysis in parallel
+			openai.chat.completions.create({
+				model: "gpt-4o-mini",
+				messages: [
+					{
+						role: "user",
+						content: escalationPrompt,
+					},
+				],
+				max_tokens: 300,
+				temperature: 0.3,
+			}),
+		]);
+
+		// Process escalation analysis
+		let escalationAnalysis = null;
+		try {
+			const escalationResponse =
+				escalationCompletion.choices[0]?.message?.content;
+			if (escalationResponse) {
+				try {
+					escalationAnalysis = JSON.parse(escalationResponse);
+
+					// Update chat status if escalation is needed with high confidence
+					if (
+						escalationAnalysis.escalationNeeded &&
+						escalationAnalysis.confidence > 0.7
+					) {
+						await updateChat(chatId, {
+							status: "escalated" as const,
+							lastMessageAt: new Date(),
+						});
+					}
+
+					// Create audit log for escalation analysis
+					await createAuditLog({
+						id: uuidv4(),
+						chatId,
+						messageId,
+						model: "gpt-4o-mini",
+						prompt: escalationPrompt,
+						context: JSON.stringify({
+							userMessage,
+							conversationLength: conversationHistory.length,
+							escalationAnalysis: "AI-powered analysis",
+						}),
+						response: escalationResponse,
+						usage: JSON.stringify(escalationCompletion.usage),
+					});
+				} catch (parseError) {
+					console.error(
+						"Failed to parse escalation analysis:",
+						escalationResponse,
+						parseError
+					);
+				}
+			}
+		} catch (escalationError) {
+			console.error("Error in escalation analysis:", escalationError);
+			// Continue execution even if escalation analysis fails
+		}
 
 		await createAuditLog({
 			id: uuidv4(),
@@ -117,6 +197,18 @@ export async function POST(request: NextRequest) {
 			usage: JSON.stringify(completion.usage),
 		});
 
+		const duration = Date.now() - startTime;
+		console.log(`✅ [POST /api/ai/chat] Success:`, {
+			messageId,
+			chatId: `${chatId.substring(0, 8)}...`,
+			responseLength: aiResponse.length,
+			sourcesCount: relevantKB.length,
+			escalationSuggested: analysis.escalationSuggested,
+			bookingSuggested: analysis.bookingSuggested,
+			aiEscalationNeeded: escalationAnalysis?.escalationNeeded || false,
+			duration: `${duration}ms`,
+		});
+
 		return NextResponse.json({
 			success: true,
 			message: {
@@ -126,10 +218,15 @@ export async function POST(request: NextRequest) {
 				meta,
 			},
 			sources: relevantKB,
-			analysis,
+			analysis: {
+				...analysis,
+				// Include AI escalation analysis if available
+				aiEscalationAnalysis: escalationAnalysis,
+			},
 		});
 	} catch (error) {
-		console.error("Error in AI chat API:", error);
+		const duration = Date.now() - startTime;
+		console.error(`❌ [POST /api/ai/chat] Error after ${duration}ms:`, error);
 		return NextResponse.json(
 			{ error: "Failed to generate AI response" },
 			{ status: 500 }
